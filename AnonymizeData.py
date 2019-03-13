@@ -1,9 +1,6 @@
 # User inputs
 path = 'C:/Projects/MarketCatalyst/'
 output_path = path+'AnonymizedToolInputs/'
-# Dictionary with column name to be anonymized and faker dictionary to be used
-col_faker_dict = {'Brand': brand, 'SubBrand': subBrand, 'GrowthDriver': growthDriver, 'Geography': geo, 'State': state,
-                  'ReceivingBrand': brand, 'ReceivingSubBrand': subBrand, 'ReceivingGeography': geo}
 
 ##############################################################################################################
 ##############################################################################################################
@@ -40,12 +37,19 @@ from collections import defaultdict
 
 # Load the faker and its providers
 faker = Factory.create()
-# Create mappings of names & emails to faked names & emails.
+# Create mappings of fields to faked fields
+# Choose the provider from the following URL
+# https://faker.readthedocs.io/en/master/providers/faker.providers.address.html
 brand = defaultdict(faker.company)
 subBrand = defaultdict(faker.street_name)
 geo = defaultdict(faker.country)
 growthDriver = defaultdict(faker.catch_phrase)
 state = defaultdict(faker.city)
+
+# Dictionary with column name to be anonymized and faker dictionary to be used
+col_faker_dict = {'Brand': brand, 'SubBrand': subBrand, 'GrowthDriver': growthDriver, 'Geography': geo, 'State': state,
+                  'ReceivingBrand': brand, 'ReceivingSubBrand': subBrand, 'ReceivingGeography': geo}
+
 
 # Get list of files in the directory
 os.chdir(path)
