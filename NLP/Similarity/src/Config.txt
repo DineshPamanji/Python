@@ -1,0 +1,32 @@
+### User inputs
+path = 'C:/Projects/OrgBuilder/Codes/Repo/TitleStandardization/'
+#file =  "Input/FullStandardTitles/BGT Taxonomies Job Titles.xlsx"
+file =  "Input/FullStandardTitles/Emsi_Titles.csv"
+_DIV_COL =  'title'
+_JOB_TITLE_COL = 'title' #'Job Title Concat'
+# _JOB_TITLE_COL = 'Job Title' #'title_raw'
+top10 = 0
+
+### User inputs for new file to be predicted
+new_file_path = 'C:/Egnyte/Shared/PDT/Omnia Data/Business/New Initiatives/OrgBuilder/Data/FI Sanitized Data-Sets/US Bank.xlsx'
+#new_file_path = 'C:/Egnyte/Shared/PDT/Omnia Data/Business/New Initiatives/OrgBuilder/Data/FI Sanitized Data-Sets/BOA Full Org - 8.29.17 Project Baseline.xlsx'
+_JOB_Title_COL_New = 'Job Title'
+_JOB_Title_COL_New = 'Job Family Desc'
+_EMP_ID_COL = 'Employee ID'
+
+additional_columns = ['Corporate Title']
+additional_columns = []
+#additional_columns = ["Line of Business Name"]
+# additional_columns = ['Cost Center Code']
+
+# NN Config
+# The maximum number of words to be used. (most frequent)
+MAX_NB_WORDS = 50000
+# Max number of words in each complaint.
+MAX_SEQUENCE_LENGTH = 50
+# This is fixed.
+EMBEDDING_DIM = 100
+
+# Number of iterations and batch size in each iteration
+epochs = 10
+batch_size = 128
