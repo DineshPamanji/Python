@@ -21,7 +21,7 @@ from keras.models import load_model
 from sklearn.model_selection import train_test_split
 import functools
 
-from src.helpers import *
+from src.helpers import get_matches, get_top_n_recommendations, 
 
 # path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 path = 'C:/Projects/NBA/'
@@ -209,7 +209,7 @@ pred = model.predict(encoded_pad)
 n=3
 df_pivot_1eng['recommendations'] = list(map(functools.partial(get_top_n_recommendations, n=n, tokenizer=tokenizer), pred))
 df_pivot_1eng[['Reco1', 'Reco2', 'Reco3']] = pd.DataFrame(df_pivot_1eng['recommendations'].tolist(), index=df_pivot_1eng.index)
-df_pivot_1eng.to_csv('1Engagement_Recommendations.csv')
+df_pivot_1eng.to_csv(path+'1Engagement_Recommendations.csv')
 
 
 # Check
