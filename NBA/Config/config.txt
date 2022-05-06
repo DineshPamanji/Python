@@ -1,0 +1,5 @@
+#filename = "BGT_Titles.txt"
+filename = 'shakespeare.txt'
+replace_file ='Short_Forms_Dictionary.xlsx'
+
+abbreviate = False   ## replace shortforms from dictionary
