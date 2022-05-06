@@ -5,7 +5,7 @@ import re
 #from keras.utils import to_categorical
 import os
 from numpy import array
-from pickle import dump
+from pickle import dump, load
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 
@@ -15,6 +15,8 @@ from keras.layers import Dense
 from keras.layers import LSTM
 from keras.layers import Embedding
 from keras.callbacks import EarlyStopping
+from keras.models import load_model
+
 
 from sklearn.model_selection import train_test_split
 import functools
@@ -28,6 +30,10 @@ datapath= "C:/Users/703301318/Enquero/Adidas CDNA - Documents/02. Next Best Enga
 
 
 df = pd.read_csv(datapath+'Member_Eng_Data.csv')
+
+# Only with engagements performed, not emails sent
+df = df.loc[(df['EMAIL_ENGAGED_WITHIN_48H'] ==1) | 
+            (df['ENGAGED_WITHOUT_EMAIL'] == 1) , :]
 
 # Sort by recipient
 df.sort_values(['IRECIPIENTID', 'TSENGMTDT'], inplace=True)
@@ -105,10 +111,10 @@ vocab_size = len(tokenizer.word_index) + 1
 # separate into input and output
 text_sequences = array(text_sequences)
 X, y = text_sequences[:, :-1], text_sequences[:, -1]
-y = to_categorical(y, num_classes=vocab_size)
 
 #Split dataset into train and test
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2)
+y_train = to_categorical(y_train, num_classes=vocab_size)
 seq_length = X_train.shape[1]
 
 # define model
@@ -127,31 +133,69 @@ model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accur
 model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, verbose=1
           , validation_split=0.2
           , callbacks=[EarlyStopping(monitor='val_loss'
-                                     , patience=3, min_delta=0.0001)
+                                     , patience=3, min_delta=0.0001)])
 
 # save the model to file
 model.save(path+'Model/NBE_Model.h5')
 # save the tokenizer
 dump(tokenizer, open(path+'Model/NBE_Model.pkl', 'wb'))
 
-# Labels to classes dictionary
-labels_dict = tokenizer.word_index
-
 # Test accuracy
-score, acc = model.evaluate(X_test, y_test, batch_size=batch_size)
-print('Test score:', score)
+y_test_dummy = to_categorical(y_test, num_classes=vocab_size)
+
+score, acc = model.evaluate(X_test, y_test_dummy, batch_size=batch_size)
+print('Test loss score:', score)
 print('Test accuracy:', acc)
 
+#####################
+
+# load the model
+model_name = 'Model/NBE_Model.h5'
+model = load_model(path+model_name)
+
+# load the tokenizer
+tokenizer_name = 'Model/NBE_Model.pkl'
+tokenizer = load(open(path+tokenizer_name, 'rb'))
+
+# Labels to classes dictionary
+labels_dict = tokenizer.index_word
 
 
-# Get recommendations
-def get_top_n_recommendations(pred_row, n, tokenizer):    
-    recommendations = []
-    # print(pred_row)
-    for i in pred_row.argsort()[-n:][::-1]:
-        pred_word = tokenizer.index_word[i]
-        recommendations.extend([pred_word])
-    return recommendations
+# Test - get predictions
+pred = model.predict(X_test)
+
+# Get top recommendations
+n=3
+df_test = pd.DataFrame(y_test, columns=['Actual'])
+df_test['recommendations'] = list(map(functools.partial(get_top_n_recommendations, n=n, tokenizer=tokenizer), pred))
+df_test[['Reco1', 'Reco2', 'Reco3']] = pd.DataFrame(df_test['recommendations'].tolist(), index=df_test.index)
+df_test['Actual_engagement'] = df_test["Actual"]
+df_test["Actual_engagement"].replace(labels_dict, inplace=True)
+
+# Get matches
+df_test['Match'] = list(map(get_matches, df_test["Actual_engagement"],
+                            df_test['Reco1'], df_test['Reco2'],
+                            df_test['Reco3']))
+
+X_test_df = pd.DataFrame(X_test)
+df_test['engagements_count'] = 20-(X_test_df == 0).sum(axis=1)
+
+df_test.reset_index(inplace=True)
+
+
+# Get summary
+df_summary = pd.DataFrame(df_test.groupby(["Actual_engagement", 'Match'])['Match'].count())
+df_summary['%Match'] = df_summary['Match'] / df_summary.groupby('Actual_engagement')['Match'].transform('sum')
+df_summary.to_csv(path+'Test_Summary.csv')
+
+# Get summary for 1 engagement
+df_test1 = df_test[df_test['engagements_count'] == 1]
+df_summary = pd.DataFrame(df_test1.groupby(["Actual_engagement", 'Match'])['Match'].count())
+df_summary['%Match'] = df_summary['Match'] / df_summary.groupby('Actual_engagement')['Match'].transform('sum')
+df_summary.to_csv(path+'Test_Summary1.csv')
+
+
+
 
 # Predict next engagement for users with 1 engagement
 lines_test = df_pivot_1eng['ENGMT_TYPE'].values
@@ -165,6 +209,8 @@ pred = model.predict(encoded_pad)
 n=3
 df_pivot_1eng['recommendations'] = list(map(functools.partial(get_top_n_recommendations, n=n, tokenizer=tokenizer), pred))
 df_pivot_1eng[['Reco1', 'Reco2', 'Reco3']] = pd.DataFrame(df_pivot_1eng['recommendations'].tolist(), index=df_pivot_1eng.index)
+df_pivot_1eng.to_csv('1Engagement_Recommendations.csv')
+
 
 # Check
 test_eng = [0,0,2,1]

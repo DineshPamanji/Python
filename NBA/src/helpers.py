@@ -81,3 +81,24 @@ def clean_column(df, col, use_dict=1):
     df[col] = df[col].apply(clean_text, use_dict=use_dict)
     df[col] = df[col].str.replace('\d+', '')
     return df
+
+
+# Get recommendations
+def get_top_n_recommendations(pred_row, n, tokenizer):    
+    recommendations = []
+    # print(pred_row)
+    for i in pred_row.argsort()[-n:][::-1]:
+        pred_word = tokenizer.index_word[i]
+        recommendations.extend([pred_word])
+    return recommendations
+
+def get_matches(Actual_engagement, Reco1, Reco2, Reco3):
+    if Actual_engagement == Reco1:
+        match = 1
+    elif Actual_engagement == Reco2:
+        match = 2
+    elif Actual_engagement == Reco3:
+        match = 3
+    else:
+        match = 0
+    return match
